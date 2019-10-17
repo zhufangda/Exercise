@@ -7,7 +7,6 @@
 *.exe
 *.class
 *.obj
-*.java
 *.log
 python/Python_for_data_analysis/Untitled.ipynb
 JAVA/corejava10/*
