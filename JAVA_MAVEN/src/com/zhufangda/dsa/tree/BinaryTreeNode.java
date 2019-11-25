@@ -22,7 +22,7 @@ public class BinaryTreeNode<T> implements BinaryTreePosition<T> {
     /**
      * 节点中存放的对象
      */
-    T element;
+    private T element;
 
     /** 父节点 */
     private BinaryTreePosition<T> parent;
@@ -31,6 +31,12 @@ public class BinaryTreeNode<T> implements BinaryTreePosition<T> {
     private BinaryTreePosition<T> leftChild;
     /** 右节点 */
     private BinaryTreePosition<T> rightChild;
+    /** 后代数目（包含当前节点） */
+    private int size;
+    /** 当前节点高度 */
+    private int height;
+    /** 当前节点深度 */
+    private int depth;
 
     /********************** 构造方法 ****************************/
     public BinaryTreeNode() {
@@ -57,11 +63,11 @@ public class BinaryTreeNode<T> implements BinaryTreePosition<T> {
     public BinaryTreeNode(T element, BinaryTreePosition<T> parent, boolean asLeftChild, BinaryTreePosition<T> leftChild,
             BinaryTreePosition<T> rightChild) {
 
-        this.leftChild = leftChild;
-        this.rightChild = rightChild;
+        this.size = 1;
+        this.height = this.depth = 0;
+
         this.element = element;
 
-        this.parent = parent;
         if (null != parent) {
             if (asLeftChild)
                 parent.attachLeft(this);
@@ -109,7 +115,7 @@ public class BinaryTreeNode<T> implements BinaryTreePosition<T> {
 
     @Override
     public boolean isLeftChild() {
-        return hasParent() && this == parent.getLeftChild() ? true : false;
+        return hasParent() && this == parent.getLeftChild();
     }
 
     @Override
@@ -148,6 +154,94 @@ public class BinaryTreeNode<T> implements BinaryTreePosition<T> {
         this.rightChild = rightChild;
     }
 
+    @Override
+    public int getSize() {
+        return size;
+    }
+
+    @Override
+    public void updateSize() {
+        size = 1;
+        if (hasLeftChild())
+            size += getLeftChild().getSize();
+        if (hasRightChild())
+            size += getRightChild().getSize();
+        if (hasParent())
+            getParent().updateSize();
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
+    }
+
+    @Override
+    public void updateHeight() {
+        height = 0;
+        if (hasLeftChild()){
+            height = Math.max(height, 1 + leftChild.getHeight());
+        }
+
+        if (hasRightChild()){
+            height = Math.max(height, 1 + rightChild.getHeight());
+        }
+
+
+        if (hasParent())
+            parent.updateHeight();
+    }
+
+    @Override
+    public int getDepth() {
+        return this.depth;
+    }
+
+    @Override
+    public void updateDepth() {
+
+        depth = hasParent()?1+parent.getDepth():0;
+
+        if(hasLeftChild()){
+            leftChild.updateDepth();
+        }
+
+        if(hasLeftChild()){
+            rightChild.updateDepth();
+        }
+
+
+    }
+
+    @Override
+    public BinaryTreePosition<T> getPrev() {
+        // 如果左子树非空, 则其中最大者即为当前节点的直接前驱
+        if (hasLeftChild())
+            return findMinDescendant(getLeftChild());
+        // 如果是右孩子, 则返回父节点
+        if (isRightChild())
+            return getParent();
+
+        BinaryTreePosition<T> v = this;
+        while (v.isLeftChild()) {
+            v = v.getParent();
+        }
+
+        return v.getParent();
+    }
+
+    @Override
+    public BinaryTreePosition<T> getSucc() {
+        if (hasRightChild())
+            return findMaxDescendant(getRightChild());
+        if (isLeftChild())
+            return getParent();
+
+        BinaryTreePosition<T> v = this;
+        while (v.isRightChild()) {
+            v = v.getParent();
+        }
+        return v.getParent();
+    }
 
     @Override
     public BinaryTreePosition<T> secede() {
@@ -156,8 +250,12 @@ public class BinaryTreeNode<T> implements BinaryTreePosition<T> {
                 parent.setLeftChild(null);
             else
                 parent.setRightChild(null);
-            parent = null;
 
+            parent.updateHeight();
+            parent.updateSize();
+
+            parent = null;
+            updateDepth();
         }
 
         return this;
@@ -168,11 +266,16 @@ public class BinaryTreeNode<T> implements BinaryTreePosition<T> {
         if (hasLeftChild())
             getLeftChild().secede();
 
+        leftChild = c;
         if (null != c) {
             c.secede();
             c.setParent(this);
-            leftChild = c;
+
+            c.updateDepth();
         }
+
+        updateSize();
+        updateHeight();
 
         return this;
     }
@@ -182,28 +285,42 @@ public class BinaryTreeNode<T> implements BinaryTreePosition<T> {
         if (hasRightChild())
             getRightChild().secede();
 
+        rightChild = c;
+
         if (null != c) {
             c.secede();
             c.setParent(this);
-            rightChild = c;
+            c.updateDepth();
         }
+
+        updateSize();
+        updateHeight();
 
         return this;
     }
 
 
     @Override
-    public int getHeight() {
-        int leftHeight = hasLeftChild()?leftChild.getHeight():-1;
-        int rightHeight = hasLeftChild()?leftChild.getHeight():-1;
-        return Math.max();
+    public Iterator<BinaryTreePosition<T>> inorderIterator() {
+        List<BinaryTreePosition<T>> list = new ArrayList<>();
+        inorder(list, this);
+        return list.iterator();
     }
 
     @Override
-    public int getDepth() {
-        return 0;
+    public Iterator<BinaryTreePosition<T>> postorderIterator() {
+        List<BinaryTreePosition<T>> list = new ArrayList<>();
+        postorder(list, this);
+        return list.iterator();
     }
 
+    @Override
+    public Iterator<BinaryTreePosition<T>> levelorderIterator() {
+        List<BinaryTreePosition<T>> list = new ArrayList<>();
+        levelorder(list, this);
+        return list.iterator();
+
+    }
 
     /********* 辅助方法 ********************************/
     /**
@@ -220,6 +337,86 @@ public class BinaryTreeNode<T> implements BinaryTreePosition<T> {
         }
 
         return v;
+    }
+
+    /**
+     * 在参数v的后代中找到最大的后代
+     *
+     * @param <E> 泛型参数
+     * @param v   待寻找的节点
+     * @return 返回v节点的最大后代
+     */
+    protected static <E> BinaryTreePosition<E> findMaxDescendant(BinaryTreePosition<E> v) {
+
+        if (null != v) {
+            while (v.hasRightChild())
+                v = v.getRightChild();
+        }
+
+        return v;
+    }
+
+    /**
+     * 前序遍历以v为根节点的子树
+     *
+     * @param list
+     * @param v
+     */
+    private static <E> void preorder(List<BinaryTreePosition<E>> list, BinaryTreePosition<E> v) {
+        if (null == v)
+            return;
+        list.add(v);
+        if (v.hasRightChild())
+            preorder(list, v.getLeftChild());
+        if (v.hasLeftChild())
+            preorder(list, v.getLeftChild());
+    }
+
+    private static <E> void inorder(List<BinaryTreePosition<E>> list, BinaryTreePosition<E> v) {
+        if (null == v)
+            return;
+        if (v.hasRightChild())
+            inorder(list, v.getLeftChild());
+        list.add(v);
+        if (v.hasRightChild())
+            inorder(list, v.getLeftChild());
+    }
+
+    private static <E> void postorder(List<BinaryTreePosition<E>> list, BinaryTreePosition<E> v) {
+        if (null == v)
+            return;
+
+        if (v.hasRightChild())
+            postorder(list, v.getLeftChild());
+        if (v.hasLeftChild())
+            postorder(list, v.getLeftChild());
+        list.add(v);
+    }
+
+    private static <E> void levelorder(List<BinaryTreePosition<E>> list, BinaryTreePosition<E> v) {
+        Queue<BinaryTreePosition<E>> queue = new LinkedList<>();
+
+        queue.add(v);
+        while(!queue.isEmpty()){
+            v = queue.poll();
+            list.add(v);
+
+            if(v.hasLeftChild()){
+                queue.add(v.getLeftChild());
+            }
+
+            if(v.hasRightChild()){
+                queue.add(v.getRightChild());
+            }
+
+        }
+
+
+    }
+
+    @Override
+    public Iterator<BinaryTreePosition<T>> preorderIterator() {
+        return null;
     }
 
     /********************* 重写Object方法 ******************/
