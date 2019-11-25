@@ -1,0 +1,9 @@
+{
+    "java.checkstyle.configuration": "/sun_checks.xml",
+    "editor.rulers": [
+        120
+    ],
+    "editor.wordWrapColumn": 120,
+    "java.format.settings.url": "https://raw.githubusercontent.com/alibaba/p3c/master/p3c-formatter/eclipse-codestyle.xml",
+    "java.format.settings.profile": ""
+}
