@@ -36,8 +36,8 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
 
   /*****************************BinaryTree接口方法 ***************************/
   @Override
-  public T getRoot() {
-    return root.getElem();
+  public T getRoot(){
+    return root==null?null:root.getElem();
   }
 
   @Override
@@ -88,19 +88,24 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
   public void insert(T t) {
     BinaryTreePosition<T> node = new BinaryTreeNode<>(t);
 
+    if(isEmpty()){
+        root = node;
+        return;
+    }
+
     BinaryTreePosition<T> curr = root;
     BinaryTreePosition<T> parent = root;
 
     while (curr != null) {
       parent = curr;
-      if (t.compareTo(curr.getElem()) <= 0) {
+      if (t.compareTo(curr.getElem()) < 0) {
         curr = curr.getLeftChild();
       } else {
         curr = curr.getRightChild();
       }
     }
 
-    if (t.compareTo(parent.getElem()) <= 0) {
+    if (t.compareTo(parent.getElem()) < 0) {
       parent.attachLeft(node);
     } else {
       parent.attachRight(node);
@@ -109,6 +114,7 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
 
   @Override
   public void remove(T t) {
+      boolean node = search(t);
 
   }
 
@@ -163,6 +169,8 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
 
     return false;
   }
+
+
 
 
   @Override
@@ -262,6 +270,9 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
+    builder.append("Tree structure ")
+        .append(super.toString())
+        .append("\n");
 
     Stack<BinaryTreePosition<T>> stack = new Stack();
 
@@ -272,7 +283,7 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
       if(curr.hasRightChild()) stack.add(curr.getRightChild());
       if(curr.hasLeftChild()) stack.add(curr.getLeftChild());
     }
-
+    builder.append("------------\n");
     return builder.toString();
   }
 
