@@ -8,6 +8,7 @@
 package com.zhufangda.dsa.tree;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Stack;
 
 /**
@@ -52,36 +53,7 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
 
   @Override
   public int getHeight() {
-    return isEmpty()?-1:root.getHeight();
-  }
-
-  @Override
-  public Iterator<T> preorderIterator() {
-      //TODO
-      return null;
-//      return root.preorderIterator();
-  }
-
-  @Override
-  public Iterator<T> inorderIterator() {
-        //TODO
-      return null;
-      //return root.inorderIterator();
-
-  }
-
-  @Override
-  public Iterator<T> postorderIterator() {
-      //TODO
-      return null;
-      //return root.postorderIterator();
-  }
-
-  @Override
-  public Iterator<T> levelorderIterator() {
-      //TODO
-      return null;
-//    return root.levelorderIterator();
+    return isEmpty()?0:root.getHeight();
   }
 
   @Override
@@ -94,18 +66,21 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
     }
 
     BinaryTreePosition<T> curr = root;
-    BinaryTreePosition<T> parent = root;
+    BinaryTreePosition<T> parent = null;
+    boolean isLeft=false;
 
-    while (curr != null) {
+    while (null != curr) {
       parent = curr;
       if (t.compareTo(curr.getElem()) < 0) {
         curr = curr.getLeftChild();
+        isLeft = true;
       } else {
         curr = curr.getRightChild();
+        isLeft=false;
       }
     }
 
-    if (t.compareTo(parent.getElem()) < 0) {
+    if (isLeft) {
       parent.attachLeft(node);
     } else {
       parent.attachRight(node);
@@ -114,8 +89,10 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
 
   @Override
   public void remove(T t) {
-      boolean node = search(t);
-
+      BinaryTreePosition<T> node = searchNode(t);
+      if(node!=null){
+          removeNode(node);
+      }
   }
 
   /**
@@ -149,33 +126,42 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
     }
   }
 
+  @Override
+  public BinaryTreePosition<T> searchNode(T value){
+      if(value == null){
+          return null;
+      }
+
+      BinaryTreePosition<T> curr = root;
+      while (curr != null) {
+          if (value.equals(curr.getElem())) {
+              return curr;
+          } else if (value.compareTo(curr.getElem()) < 0) {
+              curr = curr.getLeftChild();
+          } else {
+              curr = curr.getRightChild();
+          }
+      }
+
+      return null;
+
+
+  }
 
   @Override
   public boolean search(T value) {
-    if (value == null) {
-      return false;
-    }
+    BinaryTreePosition<T> node = searchNode(value);
 
-    BinaryTreePosition<T> curr = root;
-    while (curr != null) {
-      if (value.equals(curr.getElem())) {
-        return true;
-      } else if (value.compareTo(curr.getElem()) < 0) {
-        curr = curr.getLeftChild();
-      } else {
-        curr = curr.getRightChild();
-      }
-    }
+    return node != null;
 
-    return false;
   }
 
 
 
 
   @Override
-  public T mininum() {
-    BinaryTreePosition<T> curr = mininum(root);
+  public T minimum() {
+    BinaryTreePosition<T> curr = minimum(root);
     if (curr == null) {
       return null;
     } else {
@@ -184,7 +170,7 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
   }
 
   @Override
-  public BinaryTreePosition<T> mininum(BinaryTreePosition<T> node) {
+  public BinaryTreePosition<T> minimum(BinaryTreePosition<T> node) {
     BinaryTreePosition<T> curr = node;
     if(curr==null){
       return null;
@@ -231,7 +217,7 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
     }
 
     if (node.hasRightChild()) {
-      return mininum(node.getRightChild());
+      return minimum(node.getRightChild());
     }
 
     BinaryTreePosition<T> curr = node;
@@ -286,6 +272,165 @@ public class BinarySearchTree<T extends Comparable<T>> implements BinaryTree<T> 
     builder.append("------------\n");
     return builder.toString();
   }
+
+  /************** 遍历器 **********************/
+    @Override
+    public Iterator<T> preorderIterator() {
+        return new Iterator<T>() {
+            BinaryTreePosition<T> curr;
+            Boolean hasNextElement = true;
+
+            {
+                curr = root;
+                hasNextElement = (curr != null);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return hasNextElement;
+            }
+
+            @Override
+            public T next() {
+                if (!hasNextElement) {
+                    {
+                        throw new NoSuchElementException("Can not find next elements.");
+                    }
+                }
+
+                T ans = curr.getElem();
+
+                if (curr.hasLeftChild()) {
+                    curr = curr.getLeftChild();
+                }else if(curr.hasRightChild()){
+                    curr = curr.getRightChild();
+                } else if (curr.isLeftChild() && curr.getParent().hasRightChild()) {
+                    curr = curr.getParent().getRightChild();
+                } else {
+                    while (curr.getParent()!= null) {
+                        curr = curr.getParent();
+
+                        if (curr.isLeftChild()  && curr.getParent().hasRightChild()) {
+                            curr = curr.getParent().getRightChild();
+                            break;
+                        }
+                    }
+
+
+                }
+
+                hasNextElement = curr.getParent()!=null;
+                return ans;
+            }
+        };
+    }
+
+
+    @Override
+    public Iterator<T> inorderIterator() {
+        return new Iterator<T>() {
+            BinaryTreePosition<T> curr;
+            Boolean hasNextElement = true;
+
+            {
+                curr = minimum(root);
+                hasNextElement = (curr != null);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return hasNextElement;
+            }
+
+            @Override
+            public T next() {
+                if (!hasNextElement) {
+                    {
+                        throw new NoSuchElementException("Can not find next elements.");
+                    }
+                }
+
+                T ans = curr.getElem();
+
+                if (curr.hasRightChild()) {
+                    curr = minimum(curr.getRightChild());
+                }else{
+                    while (curr.getParent() != null) {
+                        if (curr.isLeftChild()) {
+                            break;
+                        }
+                        curr = curr.getParent();
+                    }
+                    curr = curr.getParent();
+                }
+
+                hasNextElement = !(curr==null);
+                return ans;
+            }
+        };
+
+    }
+
+    @Override
+    public Iterator<T> postorderIterator() {
+        return new Iterator<T>() {
+            BinaryTreePosition<T> curr;
+            Boolean hasNextElement = true;
+
+            {
+                curr = aux(root);
+                hasNextElement = (curr != null);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return hasNextElement;
+            }
+
+            public BinaryTreePosition<T> aux(BinaryTreePosition<T> node){
+                while(node!=null){
+                    if(node.hasLeftChild()){
+                        node = node.getLeftChild();
+                    }else if(node.hasRightChild()){
+                        node = node.getRightChild();
+                    }else{
+                        break;
+                    }
+                }
+
+                return node;
+            }
+            @Override
+            public T next() {
+                if (!hasNextElement) {
+                    {
+                        throw new NoSuchElementException("Can not find next elements.");
+                    }
+                }
+
+                T ans = curr.getElem();
+
+                if(curr.hasParent() && curr.isLeftChild() && curr.getParent().hasRightChild()) {
+                    curr = curr.getParent().getRightChild();
+                    curr = aux(curr);
+
+                }else{
+                    curr = curr.getParent();
+                }
+
+                hasNextElement = (curr!=null);
+                return ans;
+            }
+        };
+        //return root.postorderIterator();
+    }
+
+    @Override
+    public Iterator<T> levelOrderIterator() {
+        //TODO
+        return null;
+//    return root.levelorderIterator();
+    }
 
 
 }
