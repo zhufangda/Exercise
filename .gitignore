@@ -8,7 +8,7 @@
 *.class
 *.obj
 *.log
-python/Python_for_data_analysis/Untitled.ipynb
+**/Untitled.ipynb
 JAVA/corejava10/*
 *.zip
 */.vscode/*
@@ -16,3 +16,10 @@ JAVA/corejava10/*
 python/Python_for_data_analysis/*
 python/path
 *.7z
+
+
+# cpp
+**/*.dSYM/**
+**/build
+**/*.o
+**/*.plist
