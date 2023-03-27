@@ -12,13 +12,15 @@ void critical_section(int input) {
 }
 
 int main() {
-  std::cout << "Current Thread:" << std::this_thread::get_id() << std::endl;
+  std::cout << "Current Thread - main :" << std::this_thread::get_id() << std::endl;
   std::thread thread1(critical_section, 1), thread2(critical_section, 2);
-  thread1.join();
-  std::cout << std::setw(5) << " T1 : " << thread1.get_id() << "Finished"
+  std::this_thread::sleep_for(std::chrono::seconds(10));
+  thread1.detach();
+  std::cout << std::setw(5) << " T1 : " << thread1.get_id() << " Finished"
             << std::endl;
-  thread2.join();
-  std::cout << std::setw(5) << " T2 : " << thread1.get_id() << "Finished"
+  thread2.detach();
+  std::cout << std::setw(5) << " T2 : " << thread2.get_id() << " Finished"
             << std::endl;
   return 0;
 }
+di
