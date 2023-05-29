@@ -11,9 +11,21 @@ void show_bytes(byte_pointer start, size_t len){
 }
 
 void show_int(int x){
-    show_bytes((byte_pointer), &x, sizeof(int));
+    show_bytes((byte_pointer)&x, sizeof(int));
 }
 
 void show_float(float x){
-    show_bytes((byte_pointer), &x, sizeof(int));
+    show_bytes((byte_pointer)&x, sizeof(float));
+}
+
+void show_pointer(void* x){
+    show_bytes((byte_pointer)&x, sizeof(void*));
+}
+
+int main(){
+    int x = 2607352;
+    printf(" %.2x\n", 2607352);
+    show_int(x);
+    show_float(3510593.0);
+    show_pointer(&x);
 }
