@@ -22,3 +22,6 @@ target_link_libraries(tutorial_6 Boost::asio glog::glog Boost::thread)
 
 add_executable(datetime_1 datetime_1.cpp)
 target_link_libraries(datetime_1 Boost::asio glog::glog Boost::thread)
+
+add_executable(datetime_2 datetime_2.cpp)
+target_link_libraries(datetime_2 Boost::asio glog::glog Boost::thread)
